@@ -88,7 +88,19 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     cors.init_app(app)
 
-    # 5. Register blueprints (API routes).
+    # 5. Import models so Flask-Migrate can detect them.
+    #    Alembic (which powers Flask-Migrate) discovers models by inspecting
+    #    all classes that inherit from db.Model. But Python only knows about
+    #    a class after it's been imported. If we skip this import, running
+    #    `flask db migrate` would generate an empty migration because Alembic
+    #    wouldn't see any models to create tables for.
+    #
+    #    We import inside create_app() (not at the top of the file) to avoid
+    #    circular imports: models import `db` from this module, so this module
+    #    can't import models before `db` is defined.
+    from app.models import Student, Course, Semester, Enrollment  # noqa: F401
+
+    # 6. Register blueprints (API routes).
     #    Blueprints are Flask's way of organizing routes into modules.
     #    Each blueprint handles one entity (students, courses, etc.).
     #    These will be added in Phase 3.
