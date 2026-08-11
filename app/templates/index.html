@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Student Manager — manage students, courses, semesters, and enrollments.">
+    <title>Student Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div id="app">
+
+        <!-- Mobile sidebar toggle -->
+        <button class="sidebar-toggle" id="sidebar-toggle"
+                aria-label="Toggle navigation">☰</button>
+
+        <!-- Sidebar overlay (mobile) -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <!-- ============================================================ -->
+        <!-- Sidebar                                                      -->
+        <!-- ============================================================ -->
+        <aside id="sidebar" role="navigation" aria-label="Main navigation">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="sidebar-logo-icon" aria-hidden="true">🎓</div>
+                    <span class="sidebar-logo-text">Student Manager</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-label">Menu</div>
+
+                <button class="nav-link active" data-route="dashboard" aria-current="page">
+                    <span class="nav-icon" aria-hidden="true">📊</span>
+                    Dashboard
+                </button>
+                <button class="nav-link" data-route="students">
+                    <span class="nav-icon" aria-hidden="true">👤</span>
+                    Students
+                </button>
+                <button class="nav-link" data-route="courses">
+                    <span class="nav-icon" aria-hidden="true">📚</span>
+                    Courses
+                </button>
+                <button class="nav-link" data-route="semesters">
+                    <span class="nav-icon" aria-hidden="true">📅</span>
+                    Semesters
+                </button>
+                <button class="nav-link" data-route="enrollments">
+                    <span class="nav-icon" aria-hidden="true">📝</span>
+                    Enrollments
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="nav-section-label">System</div>
+                <button class="nav-link" id="nav-settings" aria-label="Settings">
+                    <span class="nav-icon" aria-hidden="true">⚙️</span>
+                    Settings
+                </button>
+            </div>
+        </aside>
+
+        <!-- ============================================================ -->
+        <!-- Main Content                                                 -->
+        <!-- ============================================================ -->
+        <main id="main-content">
+            <header id="page-header">
+                <div class="page-title-group">
+                    <h1 class="page-title" id="page-title">Dashboard</h1>
+                    <p class="page-subtitle" id="page-subtitle">Overview of your data</p>
+                </div>
+                <div class="page-actions" id="page-actions"></div>
+            </header>
+
+            <section id="page-content" aria-live="polite">
+                <!-- Routed content renders here -->
+            </section>
+        </main>
+
+        <!-- Modal root -->
+        <div id="modal-root"></div>
+
+        <!-- Toast container -->
+        <div id="toast-container" aria-live="polite"></div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/students.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/courses.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/semesters.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/enrollments.js') }}"></script>
+</body>
+</html>

@@ -19,7 +19,7 @@ How it works:
 
 import os
 # pyrefly: ignore [missing-import]
-from flask import Flask
+from flask import Flask, render_template
 # pyrefly: ignore [missing-import]
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -121,7 +121,16 @@ def create_app(config_class=Config):
         """
         return {'status': 'ok', 'message': 'Student Manager API is running'}
 
-    # 8. Register centralized JSON error handlers.
+    # 8. Serve the frontend SPA shell.
+    #    This route renders the single-page application. All client-side
+    #    routing is handled via hash fragments (#/students, #/courses, etc.)
+    #    so only a single server-side route is needed.
+    @app.route('/')
+    def index():
+        """Serve the main single-page application shell."""
+        return render_template('index.html')
+
+    # 9. Register centralized JSON error handlers.
     #    Without these, Flask returns HTML error pages by default.
     #    Since this is a JSON API, all errors should return JSON.
     @app.errorhandler(400)
