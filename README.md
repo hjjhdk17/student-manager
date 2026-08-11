@@ -9,7 +9,6 @@ A web-based student management application built with Flask and SQLite.
 - Search and filtering
 - Student GPA calculation (Vietnamese 10-point scale)
 - RESTful JSON API
-- Modern single-page frontend
 
 ## Tech Stack
 
@@ -19,7 +18,6 @@ A web-based student management application built with Flask and SQLite.
 | Database | SQLite |
 | ORM | SQLAlchemy |
 | Migrations | Flask-Migrate (Alembic) |
-| Frontend | Vanilla HTML, CSS, JavaScript |
 
 ## Getting Started
 
@@ -50,60 +48,263 @@ A web-based student management application built with Flask and SQLite.
 
 4. **Initialize the database:**
    ```bash
-   flask db init
-   flask db migrate -m "Initial migration"
    flask db upgrade
    ```
 
-5. **Run the application:**
+5. **Seed sample data (optional):**
+   ```bash
+   python seed.py
+   ```
+
+6. **Run the application:**
    ```bash
    python run.py
    ```
 
-6. **Open your browser:**
-   Navigate to [http://localhost:5000](http://localhost:5000)
+The API will be available at `http://localhost:5000`.
 
 ## Project Structure
 
 ```
 student-manager/
 ├── app/
-│   ├── __init__.py        # Flask app factory
-│   ├── models/            # SQLAlchemy ORM models
-│   ├── routes/            # Flask Blueprint API routes
-│   ├── static/            # CSS, JavaScript
-│   └── templates/         # HTML templates
-├── migrations/            # Database migration scripts
-├── instance/              # SQLite database (gitignored)
-├── config.py              # Application configuration
-├── run.py                 # Entry point
-├── requirements.txt       # Python dependencies
+│   ├── __init__.py          # Flask app factory
+│   ├── models/              # SQLAlchemy ORM models
+│   │   ├── student.py
+│   │   ├── course.py
+│   │   ├── semester.py
+│   │   └── enrollment.py
+│   └── routes/              # Flask Blueprint API routes
+│       ├── students.py
+│       ├── courses.py
+│       ├── semesters.py
+│       └── enrollments.py
+├── migrations/              # Database migration scripts
+├── instance/                # SQLite database (gitignored)
+├── config.py                # Application configuration
+├── run.py                   # Entry point
+├── seed.py                  # Sample data seeder
+├── requirements.txt         # Python dependencies
 └── README.md
 ```
 
-## API Endpoints
+## API Reference
+
+**Base URL:** `http://localhost:5000`
+
+All responses are JSON. All errors return JSON with an `error` field.
+
+---
+
+### Health Check
+
+```
+GET /api/health
+```
+
+```bash
+curl http://localhost:5000/api/health
+```
+
+```json
+{"status": "ok", "message": "Student Manager API is running"}
+```
+
+---
+
+### Students
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/health` | Health check |
-| `GET` | `/api/students` | List students |
-| `POST` | `/api/students` | Create student |
-| `GET` | `/api/students/:id` | Get student |
-| `PUT` | `/api/students/:id` | Update student |
-| `DELETE` | `/api/students/:id` | Delete student |
-| `GET` | `/api/students/:id/gpa` | Calculate GPA |
-| `GET` | `/api/courses` | List courses |
-| `POST` | `/api/courses` | Create course |
-| `PUT` | `/api/courses/:id` | Update course |
-| `DELETE` | `/api/courses/:id` | Delete course |
-| `GET` | `/api/semesters` | List semesters |
-| `POST` | `/api/semesters` | Create semester |
-| `PUT` | `/api/semesters/:id` | Update semester |
-| `DELETE` | `/api/semesters/:id` | Delete semester |
-| `GET` | `/api/enrollments` | List enrollments |
-| `POST` | `/api/enrollments` | Create enrollment |
-| `PUT` | `/api/enrollments/:id` | Update enrollment |
-| `DELETE` | `/api/enrollments/:id` | Delete enrollment |
+| `GET` | `/api/students` | List students (with search & pagination) |
+| `GET` | `/api/students/:id` | Get one student |
+| `POST` | `/api/students` | Create a student |
+| `PUT` | `/api/students/:id` | Update a student |
+| `DELETE` | `/api/students/:id` | Delete a student |
+| `GET` | `/api/students/:id/gpa` | Calculate student GPA |
+
+**List with search & pagination:**
+
+```bash
+# List all students
+curl http://localhost:5000/api/students
+
+# Search by name, code, or email
+curl "http://localhost:5000/api/students?search=An"
+
+# Paginate
+curl "http://localhost:5000/api/students?page=1&per_page=2"
+```
+
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "student_code": "SV001",
+      "first_name": "An",
+      "last_name": "Nguyen Van",
+      "email": "an.nguyen@university.edu.vn",
+      "date_of_birth": "2003-03-15",
+      "gender": "Male",
+      "phone": "0901234567",
+      "address": "123 Le Loi, District 1, Ho Chi Minh City",
+      "created_at": "2026-08-10T16:47:13.133405",
+      "updated_at": "2026-08-10T16:47:13.133410"
+    }
+  ],
+  "page": 1,
+  "per_page": 20,
+  "total": 5,
+  "pages": 1
+}
+```
+
+**Create a student:**
+
+```bash
+curl -X POST http://localhost:5000/api/students \
+  -H "Content-Type: application/json" \
+  -d '{
+    "student_code": "SV006",
+    "first_name": "Phuc",
+    "last_name": "Vo Thanh",
+    "email": "phuc.vo@university.edu.vn",
+    "date_of_birth": "2004-02-28",
+    "gender": "Male",
+    "phone": "0956789012"
+  }'
+```
+
+Returns `201 Created`.
+
+**Calculate GPA:**
+
+```bash
+curl http://localhost:5000/api/students/1/gpa
+```
+
+```json
+{
+  "student_id": 1,
+  "student_code": "SV001",
+  "student_name": "Nguyen Van An",
+  "gpa": 7.72,
+  "total_credits": 15,
+  "courses_counted": 5
+}
+```
+
+---
+
+### Courses
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/courses` | List courses (with search) |
+| `GET` | `/api/courses/:id` | Get one course |
+| `POST` | `/api/courses` | Create a course |
+| `PUT` | `/api/courses/:id` | Update a course |
+| `DELETE` | `/api/courses/:id` | Delete a course |
+
+```bash
+# List all courses
+curl http://localhost:5000/api/courses
+
+# Search by code or name
+curl "http://localhost:5000/api/courses?search=CS"
+
+# Create a course
+curl -X POST http://localhost:5000/api/courses \
+  -H "Content-Type: application/json" \
+  -d '{"course_code": "PHY101", "name": "Physics I", "credits": 3, "description": "Mechanics"}'
+```
+
+---
+
+### Semesters
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/semesters` | List all semesters |
+| `GET` | `/api/semesters/:id` | Get one semester |
+| `POST` | `/api/semesters` | Create a semester |
+| `PUT` | `/api/semesters/:id` | Update a semester |
+| `DELETE` | `/api/semesters/:id` | Delete a semester |
+
+```bash
+# List all semesters
+curl http://localhost:5000/api/semesters
+
+# Create a semester
+curl -X POST http://localhost:5000/api/semesters \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Spring 2027", "start_date": "2027-01-15", "end_date": "2027-05-31"}'
+```
+
+---
+
+### Enrollments
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/enrollments` | List enrollments (with filters) |
+| `GET` | `/api/enrollments/:id` | Get one enrollment |
+| `POST` | `/api/enrollments` | Create an enrollment |
+| `PUT` | `/api/enrollments/:id` | Update grade/status |
+| `DELETE` | `/api/enrollments/:id` | Delete an enrollment |
+
+**Filters are combinable:**
+
+```bash
+# All enrollments for student 1
+curl "http://localhost:5000/api/enrollments?student_id=1"
+
+# Student 1 in semester 1
+curl "http://localhost:5000/api/enrollments?student_id=1&semester_id=1"
+
+# All enrollments for course 1
+curl "http://localhost:5000/api/enrollments?course_id=1"
+```
+
+**Create an enrollment:**
+
+```bash
+curl -X POST http://localhost:5000/api/enrollments \
+  -H "Content-Type: application/json" \
+  -d '{"student_id": 1, "course_id": 2, "semester_id": 1}'
+```
+
+**Update grade and status:**
+
+```bash
+curl -X PUT http://localhost:5000/api/enrollments/1 \
+  -H "Content-Type: application/json" \
+  -d '{"grade": 8.5, "status": "completed"}'
+```
+
+---
+
+### Error Responses
+
+All errors return JSON:
+
+```json
+{"error": "Student not found"}
+```
+
+| Status | Meaning |
+|---|---|
+| `200` | Success |
+| `201` | Created |
+| `400` | Bad request |
+| `404` | Not found |
+| `405` | Method not allowed |
+| `409` | Conflict (duplicate) |
+| `422` | Validation error |
+| `500` | Internal server error |
 
 ## License
 

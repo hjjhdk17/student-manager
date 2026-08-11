@@ -18,7 +18,9 @@ How it works:
 """
 
 import os
+# pyrefly: ignore [missing-import]
 from flask import Flask
+# pyrefly: ignore [missing-import]
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
@@ -103,9 +105,14 @@ def create_app(config_class=Config):
     # 6. Register blueprints (API routes).
     #    Blueprints are Flask's way of organizing routes into modules.
     #    Each blueprint handles one entity (students, courses, etc.).
-    #    These will be added in Phase 3.
+    from app.routes import students_bp, courses_bp, semesters_bp, enrollments_bp
 
-    # 6. Add a health-check route so we can verify the app is running.
+    app.register_blueprint(students_bp)
+    app.register_blueprint(courses_bp)
+    app.register_blueprint(semesters_bp)
+    app.register_blueprint(enrollments_bp)
+
+    # 7. Add a health-check route so we can verify the app is running.
     @app.route('/api/health')
     def health_check():
         """Simple health check endpoint.
@@ -113,5 +120,32 @@ def create_app(config_class=Config):
         Useful for verifying the server started correctly.
         """
         return {'status': 'ok', 'message': 'Student Manager API is running'}
+
+    # 8. Register centralized JSON error handlers.
+    #    Without these, Flask returns HTML error pages by default.
+    #    Since this is a JSON API, all errors should return JSON.
+    @app.errorhandler(400)
+    def bad_request(e):
+        return {'error': 'Bad request'}, 400
+
+    @app.errorhandler(404)
+    def not_found(e):
+        return {'error': 'Resource not found'}, 404
+
+    @app.errorhandler(405)
+    def method_not_allowed(e):
+        return {'error': 'Method not allowed'}, 405
+
+    @app.errorhandler(409)
+    def conflict(e):
+        return {'error': 'Conflict'}, 409
+
+    @app.errorhandler(422)
+    def unprocessable(e):
+        return {'error': 'Unprocessable entity'}, 422
+
+    @app.errorhandler(500)
+    def internal_error(e):
+        return {'error': 'Internal server error'}, 500
 
     return app
