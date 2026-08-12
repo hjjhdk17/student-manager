@@ -1,32 +1,64 @@
 # Student Manager
 
-A web-based student management application built with Flask and SQLite.
+A web-based student management application built with Flask and SQLite. This project is a feature-complete educational system demonstrating full-stack integration, robust REST API design, and strict Server-Side security.
+
+## Overview
+
+Student Manager is a Single Page Application (SPA) designed to handle administrative educational records. It provides interfaces to manage students, academic courses, semesters, and individual enrollments. It calculates GPAs on the Vietnamese 10-point scale and enforces strict Role-Based Access Control (RBAC) to protect sensitive data.
 
 ## Features
 
-- Manage students, courses, semesters, and enrollments
-- CRUD operations for all entities
-- Search and filtering
-- Student GPA calculation (Vietnamese 10-point scale)
-- RESTful JSON API
+- **Student Management:** Full CRUD capabilities for student biographical data.
+- **Course Management:** Manage academic courses and credit weights.
+- **Semester Management:** Define academic terms with strict chronological constraints.
+- **Enrollment Management:** Track student progress, assign grades, and manage statuses (enrolled, completed, dropped).
+- **User Management:** Create and manage application access for administrators, teachers, and students.
+- **Authentication:** Secure session-based login and logout.
+- **Authorization (RBAC):** Strict server-side enforcement of Admin, Teacher, and Student permissions.
+- **Settings:** Customizable UI interface.
+- **Theme System:** Dynamic System, Light, and Dark themes with `localStorage` persistence.
+- **UI/UX Polish:** Custom confirmation modals, toast notifications, and responsive loading/empty states.
 
-## Tech Stack
+## Technology Stack
 
 | Layer | Technology |
 |---|---|
-| Backend | Python 3, Flask |
-| Database | SQLite |
-| ORM | SQLAlchemy |
-| Migrations | Flask-Migrate (Alembic) |
+| **Backend** | Python 3, Flask |
+| **Database** | SQLite |
+| **ORM** | SQLAlchemy |
+| **Migrations** | Flask-Migrate (Alembic) |
+| **Frontend** | Vanilla HTML, CSS, JavaScript (ES6) |
 
-## Getting Started
+## Architecture
 
-### Prerequisites
+Student Manager uses a classic three-tier architecture:
+1. **SPA Frontend:** Runs entirely in the browser, communicating asynchronously via the Fetch API.
+2. **Flask Backend:** Handles all routing, API endpoints, and acts as the ultimate security boundary.
+3. **Database Layer:** SQLite database mapped through SQLAlchemy, utilizing strict schema constraints.
 
-- Python 3.10 or later
-- pip (Python package manager)
+*See `docs/architecture.md` for a detailed breakdown.*
 
-### Installation
+## Project Structure
+
+```text
+student-manager/
+├── app/
+│   ├── models/          # SQLAlchemy ORM models
+│   ├── routes/          # Flask Blueprint API routes
+│   ├── templates/       # HTML layouts (index, login)
+│   └── static/          # CSS, JS, Images
+│       ├── css/
+│       └── js/
+├── migrations/          # Alembic database migrations
+├── docs/                # Project Documentation & UML
+├── instance/            # SQLite database (gitignored)
+├── config.py            # Application configuration
+├── run.py               # Entry point
+├── seed.py              # Sample data seeder
+└── requirements.txt     # Python dependencies
+```
+
+## Installation
 
 1. **Clone the repository:**
    ```bash
@@ -46,285 +78,31 @@ A web-based student management application built with Flask and SQLite.
    pip install -r requirements.txt
    ```
 
-4. **Initialize the database:**
+## Database Setup
+
+1. **Initialize the database via migrations:**
    ```bash
    flask db upgrade
    ```
 
-5. **Seed sample data (optional):**
+2. **Seed sample data (Generates sample records and dev accounts):**
    ```bash
    python seed.py
    ```
 
-6. **Run the application:**
-   ```bash
-   python run.py
-   ```
+## Running the Application
 
-The API will be available at `http://localhost:5000`.
-
-## Project Structure
-
-```
-student-manager/
-├── app/
-│   ├── __init__.py          # Flask app factory
-│   ├── models/              # SQLAlchemy ORM models
-│   │   ├── student.py
-│   │   ├── course.py
-│   │   ├── semester.py
-│   │   └── enrollment.py
-│   └── routes/              # Flask Blueprint API routes
-│       ├── students.py
-│       ├── courses.py
-│       ├── semesters.py
-│       └── enrollments.py
-├── migrations/              # Database migration scripts
-├── instance/                # SQLite database (gitignored)
-├── config.py                # Application configuration
-├── run.py                   # Entry point
-├── seed.py                  # Sample data seeder
-├── requirements.txt         # Python dependencies
-└── README.md
-```
-
-## API Reference
-
-**Base URL:** `http://localhost:5000`
-
-All responses are JSON. All errors return JSON with an `error` field.
-
----
-
-### Health Check
-
-```
-GET /api/health
-```
-
+Start the Flask development server:
 ```bash
-curl http://localhost:5000/api/health
+python run.py
 ```
+The application and API will be available at `http://localhost:5000`.
 
-```json
-{"status": "ok", "message": "Student Manager API is running"}
-```
+## Development Accounts
 
----
+> **⚠️ These credentials are for LOCAL DEVELOPMENT ONLY. Do NOT use in production.**
 
-### Students
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/students` | List students (with search & pagination) |
-| `GET` | `/api/students/:id` | Get one student |
-| `POST` | `/api/students` | Create a student |
-| `PUT` | `/api/students/:id` | Update a student |
-| `DELETE` | `/api/students/:id` | Delete a student |
-| `GET` | `/api/students/:id/gpa` | Calculate student GPA |
-
-**List with search & pagination:**
-
-```bash
-# List all students
-curl http://localhost:5000/api/students
-
-# Search by name, code, or email
-curl "http://localhost:5000/api/students?search=An"
-
-# Paginate
-curl "http://localhost:5000/api/students?page=1&per_page=2"
-```
-
-**Response:**
-
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "student_code": "SV001",
-      "first_name": "An",
-      "last_name": "Nguyen Van",
-      "email": "an.nguyen@university.edu.vn",
-      "date_of_birth": "2003-03-15",
-      "gender": "Male",
-      "phone": "0901234567",
-      "address": "123 Le Loi, District 1, Ho Chi Minh City",
-      "created_at": "2026-08-10T16:47:13.133405",
-      "updated_at": "2026-08-10T16:47:13.133410"
-    }
-  ],
-  "page": 1,
-  "per_page": 20,
-  "total": 5,
-  "pages": 1
-}
-```
-
-**Create a student:**
-
-```bash
-curl -X POST http://localhost:5000/api/students \
-  -H "Content-Type: application/json" \
-  -d '{
-    "student_code": "SV006",
-    "first_name": "Phuc",
-    "last_name": "Vo Thanh",
-    "email": "phuc.vo@university.edu.vn",
-    "date_of_birth": "2004-02-28",
-    "gender": "Male",
-    "phone": "0956789012"
-  }'
-```
-
-Returns `201 Created`.
-
-**Calculate GPA:**
-
-```bash
-curl http://localhost:5000/api/students/1/gpa
-```
-
-```json
-{
-  "student_id": 1,
-  "student_code": "SV001",
-  "student_name": "Nguyen Van An",
-  "gpa": 7.72,
-  "total_credits": 15,
-  "courses_counted": 5
-}
-```
-
----
-
-### Courses
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/courses` | List courses (with search) |
-| `GET` | `/api/courses/:id` | Get one course |
-| `POST` | `/api/courses` | Create a course |
-| `PUT` | `/api/courses/:id` | Update a course |
-| `DELETE` | `/api/courses/:id` | Delete a course |
-
-```bash
-# List all courses
-curl http://localhost:5000/api/courses
-
-# Search by code or name
-curl "http://localhost:5000/api/courses?search=CS"
-
-# Create a course
-curl -X POST http://localhost:5000/api/courses \
-  -H "Content-Type: application/json" \
-  -d '{"course_code": "PHY101", "name": "Physics I", "credits": 3, "description": "Mechanics"}'
-```
-
----
-
-### Semesters
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/semesters` | List all semesters |
-| `GET` | `/api/semesters/:id` | Get one semester |
-| `POST` | `/api/semesters` | Create a semester |
-| `PUT` | `/api/semesters/:id` | Update a semester |
-| `DELETE` | `/api/semesters/:id` | Delete a semester |
-
-```bash
-# List all semesters
-curl http://localhost:5000/api/semesters
-
-# Create a semester
-curl -X POST http://localhost:5000/api/semesters \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Spring 2027", "start_date": "2027-01-15", "end_date": "2027-05-31"}'
-```
-
----
-
-### Enrollments
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/enrollments` | List enrollments (with filters) |
-| `GET` | `/api/enrollments/:id` | Get one enrollment |
-| `POST` | `/api/enrollments` | Create an enrollment |
-| `PUT` | `/api/enrollments/:id` | Update grade/status |
-| `DELETE` | `/api/enrollments/:id` | Delete an enrollment |
-
-**Filters are combinable:**
-
-```bash
-# All enrollments for student 1
-curl "http://localhost:5000/api/enrollments?student_id=1"
-
-# Student 1 in semester 1
-curl "http://localhost:5000/api/enrollments?student_id=1&semester_id=1"
-
-# All enrollments for course 1
-curl "http://localhost:5000/api/enrollments?course_id=1"
-```
-
-**Create an enrollment:**
-
-```bash
-curl -X POST http://localhost:5000/api/enrollments \
-  -H "Content-Type: application/json" \
-  -d '{"student_id": 1, "course_id": 2, "semester_id": 1}'
-```
-
-**Update grade and status:**
-
-```bash
-curl -X PUT http://localhost:5000/api/enrollments/1 \
-  -H "Content-Type: application/json" \
-  -d '{"grade": 8.5, "status": "completed"}'
-```
-
----
-
-### Error Responses
-
-All errors return JSON:
-
-```json
-{"error": "Student not found"}
-```
-
-| Status | Meaning |
-|---|---|
-| `200` | Success |
-| `201` | Created |
-| `400` | Bad request |
-| `404` | Not found |
-| `405` | Method not allowed |
-| `401` | Authentication required |
-| `409` | Conflict (duplicate) |
-| `422` | Validation error |
-| `500` | Internal server error |
-
----
-
-## Authentication
-
-The application uses session-based authentication. All pages and API endpoints (except `/api/health`) require authentication.
-
-### How It Works
-
-1. User navigates to the application.
-2. If not authenticated, they are redirected to `/login`.
-3. User enters their username (or email) and password.
-4. On success, a session cookie is created and the user is redirected to the application.
-5. The session persists across requests (default: 8 hours).
-6. On logout, the session is cleared and the user is redirected to `/login`.
-
-### Development Users
-
-The `seed.py` script creates three development users:
+The `seed.py` script provisions the following accounts:
 
 | Username | Email | Password | Role |
 |---|---|---|---|
@@ -332,91 +110,47 @@ The `seed.py` script creates three development users:
 | `teacher` | `teacher@example.com` | `teacher123` | `teacher` |
 | `student` | `student@example.com` | `student123` | `student` |
 
-> **⚠️ These credentials are for LOCAL DEVELOPMENT ONLY. Do NOT use in production.**
+## Authentication & Authorization
 
-To create development users:
+- **Authentication:** Managed via Flask signed session cookies. Plaintext passwords are never stored; they are hashed using Werkzeug security functions.
+- **Authorization:** Handled exclusively on the backend via a `before_request` hook. 
+  - **Admins** have full system access.
+  - **Teachers** have global read access and can update grades.
+  - **Students** have isolated read-only access to their specific enrollments.
 
-```bash
-python seed.py
-```
+*See `docs/authorization.md` for the complete permission matrix.*
 
-### Login / Logout
+## Settings & Theme
 
-**Login:**
-```
-GET  /login     → Display login page
-POST /login     → Validate credentials, create session
-```
+- **Themes:** The UI provides a "Dark" mode (default), "Light" mode, and "System" mode (dynamically mirrors the OS preference using `prefers-color-scheme`).
+- **Persistence:** Saved locally in the browser to prevent UI flashing upon reload.
+- **Logout:** Handled securely via a confirmation modal inside Settings that triggers a POST request.
 
-**Logout:**
-```
-POST /logout    → Clear session, redirect to /login
-```
+## API Documentation
 
-### Authentication API
+The REST API serves JSON data under the `/api/` prefix.
 
-```
-GET /api/auth/me   → Return currently authenticated user (JSON)
-```
+*See `docs/api.md` for the full endpoint reference and payload structures.*
 
-### Protected Routes
+## Security & Testing
 
-All `/api/students`, `/api/courses`, `/api/semesters`, and `/api/enrollments` endpoints require authentication. Unauthenticated requests return:
+- Security relies on database-level constraints (UNIQUE, CHECK), parameterized ORM queries preventing SQLi, and strict session validation.
+- Functionality is verified via comprehensive manual regression testing covering auth, RBAC boundaries, CRUD validations, and theme state management.
 
-```json
-{"error": "Authentication required"}
-```
+*See `docs/security.md` and `docs/testing.md`.*
 
-with HTTP status `401`.
+## Limitations
 
-### Environment Variables
+- Uses SQLite, which restricts horizontal scaling and high concurrency.
+- Lacks automated Unit/Integration test suites.
+- Student-to-User mapping relies strictly on identical email strings.
 
-| Variable | Description | Default |
-|---|---|---|
-| `SECRET_KEY` | Flask session signing key | `dev-secret-key-change-in-production` |
+## Future Improvements
 
-> **⚠️ Set `SECRET_KEY` to a strong random value in production.**
-
-### Database Migration
-
-The `user` table is managed via Flask-Migrate:
-
-```bash
-flask db upgrade    # Apply the migration
-flask db downgrade  # Revert the migration
-```
-
-## Authorization / Role-Based Access Control (RBAC)
-
-The application implements a robust server-side **Role-Based Access Control (RBAC)** system.
-
-### Authentication vs. Authorization
-* **Authentication** verifies *who you are* (via username and password, returning a session cookie).
-* **Authorization** verifies *what you are allowed to do* (via roles checking if you have permission to access a specific resource or perform an action).
-
-### Available Roles & Permission Matrix
-
-There are three available roles in the system:
-
-| Resource | Admin | Teacher | Student |
-|---|---|---|---|
-| **Students** | CRUD | Read | - |
-| **Courses** | CRUD | Read | Read |
-| **Semesters**| CRUD | Read | Read |
-| **Enrollments**| CRUD | Read / Update | Read (own only)* |
-| **Users** | CRUD | - | - |
-
-*\*Limitation Note: Currently, the system isolates student enrollments by matching the `User.email` to `Student.email`. If no matching student is found, the student sees 0 enrollments.*
-
-### How Authorization Works
-
-1. **Backend Enforcement (The Security Boundary):** 
-   Authorization is strictly enforced on the server side using the `@role_required` decorator and a centralized `before_request` handler. Even if a user attempts to bypass the UI using `curl` or Postman, the backend will reject the request with a `403 Forbidden` status code if they lack permission.
-2. **Frontend UI:** 
-   The frontend UI conditionally renders elements based on the `window.currentUser.role` object provided by the `/api/auth/me` endpoint. It hides administrative navigation items and disables action buttons (like Add/Edit/Delete) to improve User Experience (UX), but this is *not* relied upon for security.
-3. **User Management:** 
-   Only the `admin` role has access to the `/api/users` endpoints and the Users management interface. Safe-guards are in place to prevent an admin from deleting their own account or deleting the last remaining admin account.
+- Upgrade to PostgreSQL for production deployment.
+- Implement explicit CSRF tokens for state-changing API endpoints.
+- Develop automated PyTest coverage for core endpoints.
 
 ## License
 
-This project is for educational purposes.
+This project is for educational purposes. No open-source license has currently been selected.

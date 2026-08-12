@@ -6,6 +6,16 @@
     <meta name="description" content="Student Manager — manage students, courses, semesters, and enrollments.">
     <title>Student Manager</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        (function() {
+            var theme = localStorage.getItem('theme') || 'system';
+            if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
 </head>
 <body>
     <div id="app">
@@ -67,12 +77,10 @@
                     <span class="sidebar-user-icon" aria-hidden="true">👤</span>
                     <span class="sidebar-user-name" title="{{ user.username }}">{{ user.username }}</span>
                 </div>
-                <form method="POST" action="{{ url_for('auth.logout') }}" id="logout-form">
-                    <button type="button" class="nav-link" id="nav-logout" aria-label="Logout">
-                        <span class="nav-icon" aria-hidden="true">🚪</span>
-                        Logout
-                    </button>
-                </form>
+                <button class="nav-link" data-route="settings">
+                    <span class="nav-icon" aria-hidden="true">⚙️</span>
+                    Settings
+                </button>
             </div>
         </aside>
 

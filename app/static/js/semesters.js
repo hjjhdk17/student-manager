@@ -99,6 +99,7 @@ function _renderSemestersTable() {
                     <div class="empty-state-icon">📅</div>
                     <div class="empty-state-title">No semesters found</div>
                     <div class="empty-state-text">Add your first semester to get started!</div>
+                    ${window.currentUser.role === 'admin' ? '<button class="btn btn-primary" style="margin-top:16px" onclick="_showSemesterFormModal()">Add Semester</button>' : ''}
                 </div>
             </div>`;
         return;

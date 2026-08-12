@@ -251,6 +251,7 @@ function _renderEnrollmentsTable() {
                     <div class="empty-state-icon">📝</div>
                     <div class="empty-state-title">No enrollments found</div>
                     <div class="empty-state-text">${escapeHtml(msg)}</div>
+                    ${!hasFilters && window.currentUser.role === 'admin' ? '<button class="btn btn-primary" style="margin-top:16px" onclick="_showEnrollmentFormModal()">Add Enrollment</button>' : ''}
                 </div>
             </div>`;
         return;

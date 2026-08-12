@@ -312,6 +312,12 @@ const routes = {
         render: renderUsers,
         onMount: mountUsers,
     },
+    settings: {
+        title: 'Settings',
+        subtitle: 'Application preferences',
+        render: renderSettings,
+        onMount: mountSettings,
+    },
 };
 
 /* ==========================================================================
@@ -467,6 +473,116 @@ function mountUsers() {
     if (typeof _mountUsersPage === 'function') _mountUsersPage();
 }
 
+function renderSettings() {
+    return `
+        <div class="card" style="max-width: 600px; margin-bottom: 24px;">
+            <div class="card-header">
+                <h2 class="card-title">Appearance</h2>
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Theme</label>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Choose how Student Manager looks.</p>
+                <div style="display: flex; gap: 10px;" id="theme-selector">
+                    <button class="btn btn-secondary" data-theme-val="system">System</button>
+                    <button class="btn btn-secondary" data-theme-val="light">Light</button>
+                    <button class="btn btn-secondary" data-theme-val="dark">Dark</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="max-width: 600px; margin-bottom: 24px;">
+            <div class="card-header">
+                <h2 class="card-title">Account</h2>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <p style="font-size: 0.9rem; margin-bottom: 4px;">
+                    <span style="color: var(--text-muted); display: inline-block; width: 80px;">Username:</span> 
+                    <strong>${escapeHtml(window.currentUser.username)}</strong>
+                </p>
+                <p style="font-size: 0.9rem; margin-bottom: 4px;">
+                    <span style="color: var(--text-muted); display: inline-block; width: 80px;">Role:</span> 
+                    <span style="text-transform: capitalize;">${escapeHtml(window.currentUser.role)}</span>
+                </p>
+            </div>
+            
+            <div style="border-top: 1px solid var(--border-color); padding-top: 16px;">
+                <button class="btn btn-danger" id="settings-logout-btn">Log out</button>
+            </div>
+        </div>
+        
+        <!-- Hidden form for actual logout submission -->
+        <form id="hidden-logout-form" method="POST" action="/logout" style="display: none;"></form>
+    `;
+}
+
+function mountSettings() {
+    // Theme Selector Logic
+    const themeSelector = document.getElementById('theme-selector');
+    const buttons = themeSelector.querySelectorAll('button');
+    
+    function updateActiveThemeButton() {
+        const currentPref = localStorage.getItem('theme') || 'system';
+        buttons.forEach(btn => {
+            if (btn.dataset.themeVal === currentPref) {
+                btn.classList.add('btn-primary');
+                btn.classList.remove('btn-secondary');
+            } else {
+                btn.classList.add('btn-secondary');
+                btn.classList.remove('btn-primary');
+            }
+        });
+    }
+
+    updateActiveThemeButton();
+
+    buttons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const val = e.target.dataset.themeVal;
+            localStorage.setItem('theme', val);
+            
+            if (val === 'dark' || (val === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+            
+            updateActiveThemeButton();
+            showToast('Theme updated.', 'success');
+        });
+    });
+
+    // Listen for OS theme changes if System is selected
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        const currentPref = localStorage.getItem('theme') || 'system';
+        if (currentPref === 'system') {
+            document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+        }
+    });
+
+    // Logout Modal Logic
+    document.getElementById('settings-logout-btn').addEventListener('click', () => {
+        showModal({
+            title: 'Confirm Logout',
+            bodyHtml: '<p style="color: var(--text-secondary); font-size: 0.9rem;">Are you sure you want to log out?</p>',
+            footerHtml: `
+                <button class="btn btn-secondary" id="logout-cancel">Cancel</button>
+                <button class="btn btn-danger" id="logout-confirm">Log out</button>
+            `,
+            onOpen: (modal) => {
+                modal.querySelector('#logout-cancel').addEventListener('click', closeModal);
+                modal.querySelector('#logout-confirm').addEventListener('click', () => {
+                    const btn = modal.querySelector('#logout-confirm');
+                    btn.disabled = true;
+                    btn.textContent = 'Logging out...';
+                    document.getElementById('hidden-logout-form').submit();
+                });
+                // Focus the Cancel button for safety
+                modal.querySelector('#logout-cancel').focus();
+            },
+        });
+    });
+}
+
 /**
  * Render a placeholder page for routes not yet implemented.
  */
@@ -581,26 +697,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
     });
     document.getElementById('sidebar-overlay').addEventListener('click', closeSidebar);
-
-    // --- Logout confirmation ---
-    document.getElementById('nav-logout').addEventListener('click', () => {
-        showModal({
-            title: 'Confirm Logout',
-            bodyHtml: '<p style="color: var(--text-secondary); font-size: 0.9rem;">Are you sure you want to log out?</p>',
-            footerHtml: `
-                <button class="btn btn-secondary" id="logout-cancel">Cancel</button>
-                <button class="btn btn-danger" id="logout-confirm">Log out</button>
-            `,
-            onOpen: (modal) => {
-                modal.querySelector('#logout-cancel').addEventListener('click', closeModal);
-                modal.querySelector('#logout-confirm').addEventListener('click', () => {
-                    document.getElementById('logout-form').submit();
-                });
-                // Focus the Cancel button for safety
-                modal.querySelector('#logout-cancel').focus();
-            },
-        });
-    });
 
     // --- Listen for hash changes (browser back/forward) ---
     window.addEventListener('hashchange', renderRoute);

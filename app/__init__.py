@@ -135,6 +135,7 @@ def create_app(config_class=Config):
     @app.before_request
     def _require_auth_for_api():
         """Enforce authentication for all CRUD API endpoints."""
+        # pyrefly: ignore [missing-import]
         from flask import g, jsonify, request
         path = request.path
 
@@ -160,6 +161,7 @@ def create_app(config_class=Config):
     @app.before_request
     def _enforce_rbac():
         """Enforce role-based access control on API endpoints."""
+        # pyrefly: ignore [missing-import]
         from flask import g, jsonify, request
         path = request.path
         method = request.method

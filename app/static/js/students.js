@@ -147,6 +147,7 @@ function _renderStudentsTable() {
                     <div class="empty-state-icon">👤</div>
                     <div class="empty-state-title">No students found</div>
                     <div class="empty-state-text">${escapeHtml(msg)}</div>
+                    ${!_studentsState.search && window.currentUser.role === 'admin' ? '<button class="btn btn-primary" style="margin-top:16px" onclick="_showStudentFormModal()">Add Student</button>' : ''}
                 </div>
             </div>`;
         return;

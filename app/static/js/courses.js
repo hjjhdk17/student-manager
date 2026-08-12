@@ -121,6 +121,7 @@ function _renderCoursesTable() {
                     <div class="empty-state-icon">📚</div>
                     <div class="empty-state-title">No courses found</div>
                     <div class="empty-state-text">${escapeHtml(msg)}</div>
+                    ${!_coursesState.search && window.currentUser.role === 'admin' ? '<button class="btn btn-primary" style="margin-top:16px" onclick="_showCourseFormModal()">Add Course</button>' : ''}
                 </div>
             </div>`;
         return;
