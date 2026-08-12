@@ -18,8 +18,9 @@ How it works:
 """
 
 import os
+from datetime import timedelta
 # pyrefly: ignore [missing-import]
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect, url_for
 # pyrefly: ignore [missing-import]
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -79,6 +80,14 @@ def create_app(config_class=Config):
     #    This sets app.config['SECRET_KEY'], app.config['SQLALCHEMY_DATABASE_URI'], etc.
     app.config.from_object(config_class)
 
+    # Session security settings.
+    # PERMANENT_SESSION_LIFETIME: how long a session cookie is valid.
+    # SESSION_COOKIE_HTTPONLY: prevent JavaScript from accessing the cookie.
+    # SESSION_COOKIE_SAMESITE: prevent CSRF via cross-site requests.
+    app.config.setdefault('PERMANENT_SESSION_LIFETIME', timedelta(hours=8))
+    app.config.setdefault('SESSION_COOKIE_HTTPONLY', True)
+    app.config.setdefault('SESSION_COOKIE_SAMESITE', 'Lax')
+
     # 3. Ensure the instance directory exists.
     #    SQLite needs the parent directory to exist before it can create the .db file.
     os.makedirs(os.path.join(app.root_path, '..', 'instance'), exist_ok=True)
@@ -100,17 +109,44 @@ def create_app(config_class=Config):
     #    We import inside create_app() (not at the top of the file) to avoid
     #    circular imports: models import `db` from this module, so this module
     #    can't import models before `db` is defined.
-    from app.models import Student, Course, Semester, Enrollment  # noqa: F401
+    from app.models import Student, Course, Semester, Enrollment, User  # noqa: F401
 
     # 6. Register blueprints (API routes).
     #    Blueprints are Flask's way of organizing routes into modules.
     #    Each blueprint handles one entity (students, courses, etc.).
-    from app.routes import students_bp, courses_bp, semesters_bp, enrollments_bp
+    from app.routes import students_bp, courses_bp, semesters_bp, enrollments_bp, auth_bp
+    from app.routes.auth import load_user, login_required
 
+    app.register_blueprint(auth_bp)
     app.register_blueprint(students_bp)
     app.register_blueprint(courses_bp)
     app.register_blueprint(semesters_bp)
     app.register_blueprint(enrollments_bp)
+
+    # --- Before-request: load user from session ---
+    # This runs before every request, making g.user available everywhere.
+    app.before_request(load_user)
+
+    # --- Protect API routes ---
+    # Use an app-level before_request that checks the path prefix.
+    # This avoids issues with Flask's blueprint re-registration protection.
+    # Public endpoints: /api/health, /api/auth/*, /login, /logout, static files.
+    @app.before_request
+    def _require_auth_for_api():
+        """Enforce authentication for all CRUD API endpoints."""
+        from flask import g, jsonify, request
+        path = request.path
+
+        # Allow public endpoints
+        if path == '/api/health':
+            return None
+        if path.startswith('/api/auth/'):
+            return None
+
+        # Protect all other /api/ endpoints
+        if path.startswith('/api/'):
+            if g.get('user') is None:
+                return jsonify({'error': 'Authentication required'}), 401
 
     # 7. Add a health-check route so we can verify the app is running.
     @app.route('/api/health')
@@ -126,9 +162,14 @@ def create_app(config_class=Config):
     #    routing is handled via hash fragments (#/students, #/courses, etc.)
     #    so only a single server-side route is needed.
     @app.route('/')
+    @login_required
     def index():
-        """Serve the main single-page application shell."""
-        return render_template('index.html')
+        """Serve the main single-page application shell.
+        Requires authentication — unauthenticated users are redirected to /login.
+        """
+        # pyrefly: ignore [missing-import]
+        from flask import g
+        return render_template('index.html', user=g.user)
 
     # 9. Register centralized JSON error handlers.
     #    Without these, Flask returns HTML error pages by default.
@@ -136,6 +177,10 @@ def create_app(config_class=Config):
     @app.errorhandler(400)
     def bad_request(e):
         return {'error': 'Bad request'}, 400
+
+    @app.errorhandler(401)
+    def unauthorized(e):
+        return {'error': 'Authentication required'}, 401
 
     @app.errorhandler(404)
     def not_found(e):

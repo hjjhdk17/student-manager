@@ -540,9 +540,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('sidebar-overlay').addEventListener('click', closeSidebar);
 
-    // --- Settings button demo ---
-    document.getElementById('nav-settings').addEventListener('click', () => {
-        showToast('Settings page is coming soon.', 'info');
+    // --- Logout confirmation ---
+    document.getElementById('nav-logout').addEventListener('click', () => {
+        showModal({
+            title: 'Confirm Logout',
+            bodyHtml: '<p style="color: var(--text-secondary); font-size: 0.9rem;">Are you sure you want to log out?</p>',
+            footerHtml: `
+                <button class="btn btn-secondary" id="logout-cancel">Cancel</button>
+                <button class="btn btn-danger" id="logout-confirm">Log out</button>
+            `,
+            onOpen: (modal) => {
+                modal.querySelector('#logout-cancel').addEventListener('click', closeModal);
+                modal.querySelector('#logout-confirm').addEventListener('click', () => {
+                    document.getElementById('logout-form').submit();
+                });
+                // Focus the Cancel button for safety
+                modal.querySelector('#logout-cancel').focus();
+            },
+        });
     });
 
     // --- Listen for hash changes (browser back/forward) ---

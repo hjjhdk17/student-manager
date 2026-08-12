@@ -35,7 +35,7 @@ from datetime import date
 from decimal import Decimal
 
 from app import create_app, db
-from app.models import Student, Course, Semester, Enrollment
+from app.models import Student, Course, Semester, Enrollment, User
 
 
 def seed():
@@ -55,7 +55,31 @@ def seed():
         Student.query.delete()
         Course.query.delete()
         Semester.query.delete()
+        User.query.delete()
         db.session.commit()
+
+        # ------------------------------------------------------------------
+        # Development Users
+        # ------------------------------------------------------------------
+        print('Creating development users...')
+
+        # IMPORTANT: These credentials are for LOCAL DEVELOPMENT ONLY.
+        # Do NOT use these in production.
+        admin_user = User(
+            username='admin',
+            email='admin@example.com',
+            role='admin',
+        )
+        admin_user.set_password('admin123')
+
+        student_user = User(
+            username='student',
+            email='student@example.com',
+            role='student',
+        )
+        student_user.set_password('student123')
+
+        db.session.add_all([admin_user, student_user])
 
         # ------------------------------------------------------------------
         # Students
@@ -383,10 +407,15 @@ def seed():
         # Summary
         # ------------------------------------------------------------------
         print()
+        print(f'Seeded {User.query.count()} users')
         print(f'Seeded {Student.query.count()} students')
         print(f'Seeded {Course.query.count()} courses')
         print(f'Seeded {Semester.query.count()} semesters')
         print(f'Seeded {Enrollment.query.count()} enrollments')
+        print()
+        print('Development login credentials (LOCAL DEVELOPMENT ONLY):')
+        print('  Admin:   username=admin    password=admin123')
+        print('  Student: username=student  password=student123')
         print()
         print('Done! Database is ready for development.')
 

@@ -302,9 +302,88 @@ All errors return JSON:
 | `400` | Bad request |
 | `404` | Not found |
 | `405` | Method not allowed |
+| `401` | Authentication required |
 | `409` | Conflict (duplicate) |
 | `422` | Validation error |
 | `500` | Internal server error |
+
+---
+
+## Authentication
+
+The application uses session-based authentication. All pages and API endpoints (except `/api/health`) require authentication.
+
+### How It Works
+
+1. User navigates to the application.
+2. If not authenticated, they are redirected to `/login`.
+3. User enters their username (or email) and password.
+4. On success, a session cookie is created and the user is redirected to the application.
+5. The session persists across requests (default: 8 hours).
+6. On logout, the session is cleared and the user is redirected to `/login`.
+
+### Development Users
+
+The `seed.py` script creates two development users:
+
+| Username | Email | Password | Role |
+|---|---|---|---|
+| `admin` | `admin@example.com` | `admin123` | `admin` |
+| `student` | `student@example.com` | `student123` | `student` |
+
+> **⚠️ These credentials are for LOCAL DEVELOPMENT ONLY. Do NOT use in production.**
+
+To create development users:
+
+```bash
+python seed.py
+```
+
+### Login / Logout
+
+**Login:**
+```
+GET  /login     → Display login page
+POST /login     → Validate credentials, create session
+```
+
+**Logout:**
+```
+POST /logout    → Clear session, redirect to /login
+```
+
+### Authentication API
+
+```
+GET /api/auth/me   → Return currently authenticated user (JSON)
+```
+
+### Protected Routes
+
+All `/api/students`, `/api/courses`, `/api/semesters`, and `/api/enrollments` endpoints require authentication. Unauthenticated requests return:
+
+```json
+{"error": "Authentication required"}
+```
+
+with HTTP status `401`.
+
+### Environment Variables
+
+| Variable | Description | Default |
+|---|---|---|
+| `SECRET_KEY` | Flask session signing key | `dev-secret-key-change-in-production` |
+
+> **⚠️ Set `SECRET_KEY` to a strong random value in production.**
+
+### Database Migration
+
+The `user` table is managed via Flask-Migrate:
+
+```bash
+flask db upgrade    # Apply the migration
+flask db downgrade  # Revert the migration
+```
 
 ## License
 

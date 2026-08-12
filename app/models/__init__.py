@@ -19,7 +19,8 @@ from app.models.student import Student
 from app.models.course import Course
 from app.models.semester import Semester
 from app.models.enrollment import Enrollment
+from app.models.user import User
 
 # __all__ controls what `from app.models import *` exports.
 # It also serves as documentation: these are the public symbols.
-__all__ = ['Student', 'Course', 'Semester', 'Enrollment']
+__all__ = ['Student', 'Course', 'Semester', 'Enrollment', 'User']

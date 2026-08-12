@@ -54,11 +54,17 @@
             </nav>
 
             <div class="sidebar-footer">
-                <div class="nav-section-label">System</div>
-                <button class="nav-link" id="nav-settings" aria-label="Settings">
-                    <span class="nav-icon" aria-hidden="true">⚙️</span>
-                    Settings
-                </button>
+                <div class="nav-section-label">Account</div>
+                <div class="sidebar-user-info">
+                    <span class="sidebar-user-icon" aria-hidden="true">👤</span>
+                    <span class="sidebar-user-name" title="{{ user.username }}">{{ user.username }}</span>
+                </div>
+                <form method="POST" action="{{ url_for('auth.logout') }}" id="logout-form">
+                    <button type="button" class="nav-link" id="nav-logout" aria-label="Logout">
+                        <span class="nav-icon" aria-hidden="true">🚪</span>
+                        Logout
+                    </button>
+                </form>
             </div>
         </aside>
 
