@@ -39,7 +39,7 @@ function _renderStudentsPage() {
     return `
         <div class="toolbar">
             ${buildSearchBar('Search by code, name, or email…', 'students-search')}
-            <button class="btn btn-primary" id="btn-add-student">+ Add Student</button>
+            ${window.currentUser.role === 'admin' ? '<button class="btn btn-primary" id="btn-add-student">+ Add Student</button>' : ''}
         </div>
         <div id="students-table-area">
             <div class="empty-state"><div class="loading-spinner"></div><p style="margin-top:12px;color:var(--text-muted)">Loading students…</p></div>
@@ -78,9 +78,11 @@ function _mountStudentsPage() {
         });
     }
 
-    // Add student button
-    document.getElementById('btn-add-student')
-        .addEventListener('click', () => _showStudentFormModal());
+    // Add student button (if available)
+    const addBtn = document.getElementById('btn-add-student');
+    if (addBtn) {
+        addBtn.addEventListener('click', () => _showStudentFormModal());
+    }
 }
 
 /* --------------------------------------------------------------------------
@@ -158,9 +160,11 @@ function _renderStudentsTable() {
         escapeHtml(s.phone || '—'),
         s.date_of_birth || '—',
         `<div class="table-actions">
-            <button class="btn btn-sm btn-secondary" onclick="_editStudent(${s.id})" title="Edit">✏️ Edit</button>
             <button class="btn btn-sm btn-secondary" onclick="_viewStudentGpa(${s.id})" title="View GPA">📊 GPA</button>
+            ${window.currentUser.role === 'admin' ? `
+            <button class="btn btn-sm btn-secondary" onclick="_editStudent(${s.id})" title="Edit">✏️ Edit</button>
             <button class="btn btn-sm btn-danger" onclick="_confirmDeleteStudent(${s.id}, '${escapeHtml(s.student_code)}')" title="Delete">🗑️</button>
+            ` : ''}
         </div>`,
     ]);
 

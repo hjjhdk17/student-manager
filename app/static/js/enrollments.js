@@ -67,7 +67,7 @@ function _renderEnrollmentsPage() {
         </div>
         <div class="toolbar">
             <span id="enrollments-count" class="pagination-info"></span>
-            <button class="btn btn-primary" id="btn-add-enrollment">+ Add Enrollment</button>
+            ${window.currentUser.role === 'admin' ? '<button class="btn btn-primary" id="btn-add-enrollment">+ Add Enrollment</button>' : ''}
         </div>
         <div id="enrollments-table-area">
             <div class="empty-state"><div class="loading-spinner"></div><p style="margin-top:12px;color:var(--text-muted)">Loading enrollments…</p></div>
@@ -114,9 +114,11 @@ async function _mountEnrollmentsPage() {
         _loadEnrollments();
     });
 
-    // Add enrollment button
-    document.getElementById('btn-add-enrollment')
-        .addEventListener('click', () => _showEnrollmentFormModal());
+    // Add enrollment button (if available)
+    const addBtn = document.getElementById('btn-add-enrollment');
+    if (addBtn) {
+        addBtn.addEventListener('click', () => _showEnrollmentFormModal());
+    }
 }
 
 /* --------------------------------------------------------------------------
@@ -262,8 +264,13 @@ function _renderEnrollmentsTable() {
         e.grade !== null ? `<strong>${e.grade.toFixed(2)}</strong>` : '<span style="color:var(--text-muted)">—</span>',
         _statusBadge(e.status),
         `<div class="table-actions">
+            ${window.currentUser.role === 'admin' || window.currentUser.role === 'teacher' ? `
             <button class="btn btn-sm btn-secondary" onclick="_editEnrollment(${e.id})" title="Edit grade/status">✏️ Edit</button>
+            ` : ''}
+            ${window.currentUser.role === 'admin' ? `
             <button class="btn btn-sm btn-danger" onclick="_confirmDeleteEnrollment(${e.id})" title="Delete">🗑️</button>
+            ` : ''}
+            ${window.currentUser.role === 'student' ? '<span style="color:var(--text-muted);font-size:0.8rem">View Only</span>' : ''}
         </div>`,
     ]);
 

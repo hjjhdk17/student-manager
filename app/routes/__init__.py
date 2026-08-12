@@ -6,6 +6,7 @@ This package contains Flask Blueprints for each API entity:
 - courses.py     → /api/courses/...
 - semesters.py   → /api/semesters/...
 - enrollments.py → /api/enrollments/...
+- users.py       → /api/users/... (admin only)
 
 Each blueprint handles CRUD operations for one entity.
 Blueprints are registered in the app factory (app/__init__.py).
@@ -16,5 +17,9 @@ from app.routes.courses import courses_bp
 from app.routes.semesters import semesters_bp
 from app.routes.enrollments import enrollments_bp
 from app.routes.auth import auth_bp
+from app.routes.users import users_bp
 
-__all__ = ['students_bp', 'courses_bp', 'semesters_bp', 'enrollments_bp', 'auth_bp']
+__all__ = [
+    'students_bp', 'courses_bp', 'semesters_bp',
+    'enrollments_bp', 'auth_bp', 'users_bp',
+]

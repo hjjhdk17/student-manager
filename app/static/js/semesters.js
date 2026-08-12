@@ -32,7 +32,7 @@ function _renderSemestersPage() {
     return `
         <div class="toolbar">
             <div></div>
-            <button class="btn btn-primary" id="btn-add-semester">+ Add Semester</button>
+            ${window.currentUser.role === 'admin' ? '<button class="btn btn-primary" id="btn-add-semester">+ Add Semester</button>' : ''}
         </div>
         <div id="semesters-table-area">
             <div class="empty-state"><div class="loading-spinner"></div><p style="margin-top:12px;color:var(--text-muted)">Loading semesters…</p></div>
@@ -47,8 +47,10 @@ function _renderSemestersPage() {
 function _mountSemestersPage() {
     _loadSemesters();
 
-    document.getElementById('btn-add-semester')
-        .addEventListener('click', () => _showSemesterFormModal());
+    const addBtn = document.getElementById('btn-add-semester');
+    if (addBtn) {
+        addBtn.addEventListener('click', () => _showSemesterFormModal());
+    }
 }
 
 /* --------------------------------------------------------------------------
@@ -108,8 +110,10 @@ function _renderSemestersTable() {
         s.start_date || '—',
         s.end_date || '—',
         `<div class="table-actions">
+            ${window.currentUser.role === 'admin' ? `
             <button class="btn btn-sm btn-secondary" onclick="_editSemester(${s.id})" title="Edit">✏️ Edit</button>
             <button class="btn btn-sm btn-danger" onclick="_confirmDeleteSemester(${s.id}, '${escapeHtml(s.name)}')" title="Delete">🗑️</button>
+            ` : '<span style="color:var(--text-muted);font-size:0.8rem">View Only</span>'}
         </div>`,
     ]);
 

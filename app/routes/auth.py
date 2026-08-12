@@ -1,7 +1,7 @@
 """
-Authentication Routes
-=====================
-Blueprint handling login, logout, and session management.
+Authentication & Authorization Routes
+=====================================
+Blueprint handling login, logout, session management, and RBAC helpers.
 
 Endpoints:
     GET  /login  — Display the login page
@@ -11,6 +11,9 @@ Endpoints:
 
 Authentication is session-based using Flask's built-in session mechanism.
 The user_id is stored in the session after successful login.
+
+Authorization is role-based with three roles: admin, teacher, student.
+The `role_required` decorator enforces permissions on individual routes.
 """
 
 import functools
@@ -47,6 +50,49 @@ def login_required(f):
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
+
+
+# ---------------------------------------------------------------------------
+# Valid Roles
+# ---------------------------------------------------------------------------
+
+VALID_ROLES = ('admin', 'teacher', 'student')
+"""The set of recognized user roles. Used for validation in user management."""
+
+
+# ---------------------------------------------------------------------------
+# Authorization Helper
+# ---------------------------------------------------------------------------
+
+def role_required(*roles):
+    """Decorator that restricts a route to users with specific roles.
+
+    Must be applied AFTER @login_required so that g.user is guaranteed
+    to be set.
+
+    Usage:
+        @login_required
+        @role_required('admin')
+        def admin_only_route():
+            ...
+
+        @login_required
+        @role_required('admin', 'teacher')
+        def admin_or_teacher_route():
+            ...
+
+    Returns 403 Forbidden if the authenticated user's role is not in the
+    allowed set. This is distinct from 401 (not authenticated).
+    """
+    def decorator(f):
+        @functools.wraps(f)
+        def decorated_function(*args, **kwargs):
+            user = g.get('user')
+            if user is None or user.role not in roles:
+                return jsonify({'error': 'Forbidden'}), 403
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
 
 def _is_api_request():

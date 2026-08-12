@@ -79,7 +79,14 @@ def seed():
         )
         student_user.set_password('student123')
 
-        db.session.add_all([admin_user, student_user])
+        teacher_user = User(
+            username='teacher',
+            email='teacher@example.com',
+            role='teacher',
+        )
+        teacher_user.set_password('teacher123')
+
+        db.session.add_all([admin_user, student_user, teacher_user])
 
         # ------------------------------------------------------------------
         # Students
@@ -135,6 +142,16 @@ def seed():
                 gender='Female',
                 phone='0945678901',
                 address='654 Pasteur, District 1, Ho Chi Minh City'
+            ),
+            Student(
+                student_code='SV999',
+                first_name='Student',
+                last_name='Test',
+                email='student@example.com',
+                date_of_birth=date(2000, 1, 1),
+                gender='Other',
+                phone='0999999999',
+                address='Test Address'
             ),
         ]
 
@@ -395,6 +412,15 @@ def seed():
                 grade=None,
                 status='enrolled'
             ),
+
+            # SV999 (Test Student) takes CS101
+            Enrollment(
+                student_id=students[5].id,
+                course_id=courses[0].id,   # CS101
+                semester_id=semesters[0].id,
+                grade=Decimal('8.00'),
+                status='completed'
+            ),
         ]
         db.session.add_all(enrollments)
 
@@ -415,6 +441,7 @@ def seed():
         print()
         print('Development login credentials (LOCAL DEVELOPMENT ONLY):')
         print('  Admin:   username=admin    password=admin123')
+        print('  Teacher: username=teacher  password=teacher123')
         print('  Student: username=student  password=student123')
         print()
         print('Done! Database is ready for development.')

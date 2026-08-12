@@ -324,11 +324,12 @@ The application uses session-based authentication. All pages and API endpoints (
 
 ### Development Users
 
-The `seed.py` script creates two development users:
+The `seed.py` script creates three development users:
 
 | Username | Email | Password | Role |
 |---|---|---|---|
 | `admin` | `admin@example.com` | `admin123` | `admin` |
+| `teacher` | `teacher@example.com` | `teacher123` | `teacher` |
 | `student` | `student@example.com` | `student123` | `student` |
 
 > **⚠️ These credentials are for LOCAL DEVELOPMENT ONLY. Do NOT use in production.**
@@ -384,6 +385,37 @@ The `user` table is managed via Flask-Migrate:
 flask db upgrade    # Apply the migration
 flask db downgrade  # Revert the migration
 ```
+
+## Authorization / Role-Based Access Control (RBAC)
+
+The application implements a robust server-side **Role-Based Access Control (RBAC)** system.
+
+### Authentication vs. Authorization
+* **Authentication** verifies *who you are* (via username and password, returning a session cookie).
+* **Authorization** verifies *what you are allowed to do* (via roles checking if you have permission to access a specific resource or perform an action).
+
+### Available Roles & Permission Matrix
+
+There are three available roles in the system:
+
+| Resource | Admin | Teacher | Student |
+|---|---|---|---|
+| **Students** | CRUD | Read | - |
+| **Courses** | CRUD | Read | Read |
+| **Semesters**| CRUD | Read | Read |
+| **Enrollments**| CRUD | Read / Update | Read (own only)* |
+| **Users** | CRUD | - | - |
+
+*\*Limitation Note: Currently, the system isolates student enrollments by matching the `User.email` to `Student.email`. If no matching student is found, the student sees 0 enrollments.*
+
+### How Authorization Works
+
+1. **Backend Enforcement (The Security Boundary):** 
+   Authorization is strictly enforced on the server side using the `@role_required` decorator and a centralized `before_request` handler. Even if a user attempts to bypass the UI using `curl` or Postman, the backend will reject the request with a `403 Forbidden` status code if they lack permission.
+2. **Frontend UI:** 
+   The frontend UI conditionally renders elements based on the `window.currentUser.role` object provided by the `/api/auth/me` endpoint. It hides administrative navigation items and disables action buttons (like Add/Edit/Delete) to improve User Experience (UX), but this is *not* relied upon for security.
+3. **User Management:** 
+   Only the `admin` role has access to the `/api/users` endpoints and the Users management interface. Safe-guards are in place to prevent an admin from deleting their own account or deleting the last remaining admin account.
 
 ## License
 

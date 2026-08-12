@@ -114,14 +114,15 @@ def create_app(config_class=Config):
     # 6. Register blueprints (API routes).
     #    Blueprints are Flask's way of organizing routes into modules.
     #    Each blueprint handles one entity (students, courses, etc.).
-    from app.routes import students_bp, courses_bp, semesters_bp, enrollments_bp, auth_bp
-    from app.routes.auth import load_user, login_required
+    from app.routes import students_bp, courses_bp, semesters_bp, enrollments_bp, auth_bp, users_bp
+    from app.routes.auth import load_user, login_required, role_required
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(students_bp)
     app.register_blueprint(courses_bp)
     app.register_blueprint(semesters_bp)
     app.register_blueprint(enrollments_bp)
+    app.register_blueprint(users_bp)
 
     # --- Before-request: load user from session ---
     # This runs before every request, making g.user available everywhere.
@@ -147,6 +148,78 @@ def create_app(config_class=Config):
         if path.startswith('/api/'):
             if g.get('user') is None:
                 return jsonify({'error': 'Authentication required'}), 401
+
+    # --- Role-Based Access Control (RBAC) ---
+    # Server-side enforcement of permissions per role.
+    # The permission matrix:
+    #   Admin:   full CRUD on all resources + user management
+    #   Teacher: read students/courses/semesters; read+update enrollments
+    #   Student: read courses/semesters/enrollments (own only)
+    #
+    # This is the SECURITY BOUNDARY — frontend restrictions are UX only.
+    @app.before_request
+    def _enforce_rbac():
+        """Enforce role-based access control on API endpoints."""
+        from flask import g, jsonify, request
+        path = request.path
+        method = request.method
+
+        # Only apply to /api/ endpoints (excluding auth and health)
+        if not path.startswith('/api/'):
+            return None
+        if path == '/api/health':
+            return None
+        if path.startswith('/api/auth/'):
+            return None
+
+        user = g.get('user')
+        if user is None:
+            return None  # Already handled by auth check above
+
+        role = user.role
+
+        # Admin has full access
+        if role == 'admin':
+            return None
+
+        # --- User management: admin only ---
+        if path.startswith('/api/users'):
+            return jsonify({'error': 'Forbidden'}), 403
+
+        # --- Students ---
+        if path.startswith('/api/students'):
+            if role == 'teacher':
+                # Teacher: read only
+                if method != 'GET':
+                    return jsonify({'error': 'Forbidden'}), 403
+            elif role == 'student':
+                # Student: no access to students API
+                return jsonify({'error': 'Forbidden'}), 403
+
+        # --- Courses ---
+        elif path.startswith('/api/courses'):
+            if role in ('teacher', 'student'):
+                # Read only
+                if method != 'GET':
+                    return jsonify({'error': 'Forbidden'}), 403
+
+        # --- Semesters ---
+        elif path.startswith('/api/semesters'):
+            if role in ('teacher', 'student'):
+                # Read only
+                if method != 'GET':
+                    return jsonify({'error': 'Forbidden'}), 403
+
+        # --- Enrollments ---
+        elif path.startswith('/api/enrollments'):
+            if role == 'teacher':
+                # Teacher: read + update only
+                if method not in ('GET', 'PUT'):
+                    return jsonify({'error': 'Forbidden'}), 403
+            elif role == 'student':
+                # Student: read only
+                if method != 'GET':
+                    return jsonify({'error': 'Forbidden'}), 403
 
     # 7. Add a health-check route so we can verify the app is running.
     @app.route('/api/health')

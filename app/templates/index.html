@@ -35,10 +35,12 @@
                     <span class="nav-icon" aria-hidden="true">📊</span>
                     Dashboard
                 </button>
+                {% if user.role != 'student' %}
                 <button class="nav-link" data-route="students">
                     <span class="nav-icon" aria-hidden="true">👤</span>
                     Students
                 </button>
+                {% endif %}
                 <button class="nav-link" data-route="courses">
                     <span class="nav-icon" aria-hidden="true">📚</span>
                     Courses
@@ -51,6 +53,12 @@
                     <span class="nav-icon" aria-hidden="true">📝</span>
                     Enrollments
                 </button>
+                {% if user.role == 'admin' %}
+                <button class="nav-link" data-route="users">
+                    <span class="nav-icon" aria-hidden="true">🛡️</span>
+                    Users
+                </button>
+                {% endif %}
             </nav>
 
             <div class="sidebar-footer">
@@ -93,11 +101,24 @@
 
     </div>
 
+    <!-- Global Auth Context -->
+    <script>
+        window.currentUser = {
+            id: {{ user.id | tojson }},
+            username: {{ user.username | tojson }},
+            email: {{ user.email | tojson }},
+            role: {{ user.role | tojson }}
+        };
+    </script>
+
     <!-- Scripts -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/students.js') }}"></script>
     <script src="{{ url_for('static', filename='js/courses.js') }}"></script>
     <script src="{{ url_for('static', filename='js/semesters.js') }}"></script>
     <script src="{{ url_for('static', filename='js/enrollments.js') }}"></script>
+    {% if user.role == 'admin' %}
+    <script src="{{ url_for('static', filename='js/users.js') }}"></script>
+    {% endif %}
 </body>
 </html>

@@ -306,6 +306,12 @@ const routes = {
         render: renderEnrollments,
         onMount: mountEnrollments,
     },
+    users: {
+        title: 'Users',
+        subtitle: 'Manage user accounts',
+        render: renderUsers,
+        onMount: mountUsers,
+    },
 };
 
 /* ==========================================================================
@@ -313,8 +319,12 @@ const routes = {
    ========================================================================== */
 
 function renderDashboard() {
+    const isAdmin = window.currentUser.role === 'admin';
+    const isStudent = window.currentUser.role === 'student';
+
     return `
         <div class="stat-grid">
+            ${isStudent ? '' : `
             <div class="stat-card">
                 <div class="stat-icon students" aria-hidden="true">👤</div>
                 <div class="stat-info">
@@ -322,6 +332,7 @@ function renderDashboard() {
                     <span class="stat-value" id="dash-students">…</span>
                 </div>
             </div>
+            `}
             <div class="stat-card">
                 <div class="stat-icon courses" aria-hidden="true">📚</div>
                 <div class="stat-info">
@@ -343,6 +354,15 @@ function renderDashboard() {
                     <span class="stat-value" id="dash-enrollments">…</span>
                 </div>
             </div>
+            ${isAdmin ? `
+            <div class="stat-card">
+                <div class="stat-icon" aria-hidden="true" style="background:var(--success-bg);color:var(--success)">🛡️</div>
+                <div class="stat-info">
+                    <span class="stat-label">Users</span>
+                    <span class="stat-value" id="dash-users">…</span>
+                </div>
+            </div>
+            ` : ''}
         </div>
 
         <div style="margin-top: 28px;">
@@ -351,10 +371,11 @@ function renderDashboard() {
                     <h2 class="card-title">Quick Navigation</h2>
                 </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="navigate('students')">Manage Students</button>
-                    <button class="btn btn-secondary" onclick="navigate('courses')">Manage Courses</button>
-                    <button class="btn btn-secondary" onclick="navigate('semesters')">Manage Semesters</button>
-                    <button class="btn btn-secondary" onclick="navigate('enrollments')">Manage Enrollments</button>
+                    ${isStudent ? '' : `<button class="btn btn-primary" onclick="navigate('students')">Manage Students</button>`}
+                    <button class="btn btn-secondary" onclick="navigate('courses')">View Courses</button>
+                    <button class="btn btn-secondary" onclick="navigate('semesters')">View Semesters</button>
+                    <button class="btn btn-secondary" onclick="navigate('enrollments')">${isStudent ? 'View' : 'Manage'} Enrollments</button>
+                    ${isAdmin ? `<button class="btn btn-secondary" onclick="navigate('users')">Manage Users</button>` : ''}
                 </div>
             </div>
         </div>
@@ -368,12 +389,23 @@ function renderDashboard() {
 async function mountDashboard() {
     try {
         // Fetch counts in parallel using existing endpoints
-        const [students, courses, semesters, enrollments] = await Promise.all([
-            apiFetch('/api/students?per_page=1'),
+        const promises = [
             apiFetch('/api/courses'),
             apiFetch('/api/semesters'),
             apiFetch('/api/enrollments'),
-        ]);
+        ];
+        if (window.currentUser.role !== 'student') {
+            promises.push(apiFetch('/api/students?per_page=1'));
+        } else {
+            promises.push(Promise.resolve({ total: 0 }));
+        }
+        if (window.currentUser.role === 'admin') {
+            promises.push(apiFetch('/api/users'));
+        } else {
+            promises.push(Promise.resolve({ total: 0 }));
+        }
+
+        const [courses, semesters, enrollments, students, users] = await Promise.all(promises);
 
         // Students endpoint returns paginated total; others return total directly
         const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
@@ -381,6 +413,7 @@ async function mountDashboard() {
         el('dash-courses', courses.total);
         el('dash-semesters', semesters.total);
         el('dash-enrollments', enrollments.total);
+        el('dash-users', users.total);
     } catch (err) {
         // Silently degrade — dashboard just shows '…' if the API is unreachable
     }
@@ -423,6 +456,15 @@ function renderEnrollments() {
 }
 function mountEnrollments() {
     if (typeof _mountEnrollmentsPage === 'function') _mountEnrollmentsPage();
+}
+
+function renderUsers() {
+    return typeof _renderUsersPage === 'function'
+        ? _renderUsersPage()
+        : _renderPlaceholder('Users', '🛡️', 'User management module missing.');
+}
+function mountUsers() {
+    if (typeof _mountUsersPage === 'function') _mountUsersPage();
 }
 
 /**

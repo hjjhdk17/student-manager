@@ -33,7 +33,7 @@ function _renderCoursesPage() {
     return `
         <div class="toolbar">
             ${buildSearchBar('Search by code or name…', 'courses-search')}
-            <button class="btn btn-primary" id="btn-add-course">+ Add Course</button>
+            ${window.currentUser.role === 'admin' ? '<button class="btn btn-primary" id="btn-add-course">+ Add Course</button>' : ''}
         </div>
         <div id="courses-table-area">
             <div class="empty-state"><div class="loading-spinner"></div><p style="margin-top:12px;color:var(--text-muted)">Loading courses…</p></div>
@@ -63,8 +63,10 @@ function _mountCoursesPage() {
         });
     }
 
-    document.getElementById('btn-add-course')
-        .addEventListener('click', () => _showCourseFormModal());
+    const addBtn = document.getElementById('btn-add-course');
+    if (addBtn) {
+        addBtn.addEventListener('click', () => _showCourseFormModal());
+    }
 }
 
 /* --------------------------------------------------------------------------
@@ -131,8 +133,10 @@ function _renderCoursesTable() {
         `<span class="badge badge-info">${c.credits}</span>`,
         escapeHtml(c.description || '—'),
         `<div class="table-actions">
+            ${window.currentUser.role === 'admin' ? `
             <button class="btn btn-sm btn-secondary" onclick="_editCourse(${c.id})" title="Edit">✏️ Edit</button>
             <button class="btn btn-sm btn-danger" onclick="_confirmDeleteCourse(${c.id}, '${escapeHtml(c.course_code)}')" title="Delete">🗑️</button>
+            ` : '<span style="color:var(--text-muted);font-size:0.8rem">View Only</span>'}
         </div>`,
     ]);
 

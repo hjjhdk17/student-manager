@@ -14,12 +14,13 @@ Endpoints:
 from decimal import Decimal, InvalidOperation
 
 # pyrefly: ignore [missing-import]
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 # pyrefly: ignore [missing-import]
 from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.models import Student, Course, Semester, Enrollment
+from app.routes.auth import login_required
 
 enrollments_bp = Blueprint('enrollments', __name__, url_prefix='/api/enrollments')
 
@@ -31,6 +32,7 @@ VALID_STATUSES = ('enrolled', 'completed', 'dropped')
 # GET /api/enrollments — List with filters
 # ---------------------------------------------------------------------------
 @enrollments_bp.route('', methods=['GET'])
+@login_required
 def list_enrollments():
     """Return enrollments, optionally filtered by student, course, and/or semester.
 
@@ -42,13 +44,24 @@ def list_enrollments():
     query = Enrollment.query
 
     # Apply filters if provided.
-    student_id = request.args.get('student_id', type=int)
-    course_id = request.args.get('course_id', type=int)
     semester_id = request.args.get('semester_id', type=int)
 
-    if student_id is not None:
-        query = query.filter(Enrollment.student_id == student_id)
-    if course_id is not None:
+    if g.user.role == 'student':
+        # Find the student record matching this user's email
+        current_student = Student.query.filter_by(email=g.user.email).first()
+        if not current_student:
+            # If the user has no matching student record, they see no enrollments
+            return jsonify({'data': [], 'total': 0})
+        # Force the student_id filter to their own ID
+        query = query.filter(Enrollment.student_id == current_student.id)
+    else:
+        # For non-students, apply the optional student_id filter if provided
+        student_id = request.args.get('student_id', type=int)
+        if student_id:
+            query = query.filter(Enrollment.student_id == student_id)
+
+    course_id = request.args.get('course_id', type=int)
+    if course_id:
         query = query.filter(Enrollment.course_id == course_id)
     if semester_id is not None:
         query = query.filter(Enrollment.semester_id == semester_id)
@@ -71,6 +84,12 @@ def get_enrollment(enrollment_id):
     enrollment = db.session.get(Enrollment, enrollment_id)
     if not enrollment:
         return jsonify({'error': 'Enrollment not found'}), 404
+
+    # --- Student authorization check ---
+    if g.user.role == 'student':
+        current_student = Student.query.filter_by(email=g.user.email).first()
+        if not current_student or enrollment.student_id != current_student.id:
+            return jsonify({'error': 'Forbidden'}), 403
 
     return jsonify(enrollment.to_dict())
 
